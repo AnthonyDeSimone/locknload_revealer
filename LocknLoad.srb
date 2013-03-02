@@ -1,0 +1,48 @@
+module LocknLoad
+	extend self
+
+	def reveal(mac, user_key)
+		mac.gsub!('.', '')
+
+		mac2 = []
+
+		6.times do |i|
+			mac2 << mac[(2*i)..(2*i+1)].to_i(16);
+		end
+
+		x = (mac2.inject{|sum,n| sum + n }) & 255
+
+		mac2[0] = ((mac2[0] * user_key[0].ord) ^ x) & 255;  		
+		mac2[1] = ((mac2[1] * user_key[1].ord) ^ x) & 255;
+		mac2[2] = ((mac2[2] * user_key[2].ord) ^ x) & 255;
+		mac2[3] = ((mac2[3] * user_key[3].ord) ^ x) & 255;
+		mac2[4] = ((mac2[4] * user_key[4].ord) ^ x) & 255;
+		mac2[5] = ((mac2[5] * user_key[5].ord) ^ x) & 255;
+		mac2[6] = ((mac2[2] * user_key[6].ord) ^ x) & 255;
+		mac2[7] = ((mac2[4] * user_key[7].ord) ^ x) & 255;
+
+		mac2.inject("") { |password, m| password += '\x' + m.to_s(16).upcase }		
+	end
+end
+
+Shoes.app :width => 375, :height => 145, :resizable => false, :title => "Infusebox LOCKnLOAD" do	
+	background dimgray..darkgray
+	
+	stack do
+		flow :width => 375 do
+			stack :width => 150 do
+				para strong("MAC address"), :stroke => gainsboro
+				para strong("User Key"), 		:stroke => gainsboro
+				para strong("Password"), 		:stroke => gainsboro
+			end
+			
+			stack :width => 225 do
+				flow :margin => 5 do @mac			 = edit_line end
+				flow :margin => 5 do @user_key = edit_line end
+				flow :margin => 5 do @password = edit_line end
+			end
+		end
+
+		para(link("Get Password") { @password.text = LocknLoad.reveal(@mac.text, @user_key.text) }, :weight => "bold", :stroke => gainsboro)		
+		end
+end
